@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { User } from '../models/userModel';
 import * as userService from '../services/userService';
+import * as toDoService from '../services/toDoService';
 
 export const getAllUsers = (req: Request, res: Response): void => {
   const users = userService.getAllUsers();
@@ -70,5 +71,35 @@ export const deleteUser = (req: Request, res: Response): void =>{
   }
 }
 
+export const getAllToDosOfUser = (req: Request, res: Response) => {
+  const userId = parseInt(req.params.id, 10); // Convert the id from string to number
 
+  if (isNaN(userId)) {
+    return res.status(400).json({ error: 'Invalid user ID' });
+  }
 
+  const todos = toDoService.getToDoById(userId);
+
+  if (todos === undefined) {
+    return res.status(404).json({ message: 'No todos found for this user' });
+  }
+
+  res.json(todos);
+}
+
+export const getToDosByUserId = (req: Request, res: Response) => {
+  try {
+    // Get the user ID from the request
+    const userId = Number(req.params.id);
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+    const todos = toDoService.getToDoById(userId);
+    if (todos === undefined) {
+      return res.status(404).json({ message: 'No todos found for this user' });
+    }
+    res.json(todos);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+}
