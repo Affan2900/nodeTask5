@@ -9,6 +9,7 @@ router.post('/users', userController.addUser);
 router.put('/users/:id', userController.updateUser);
 router.patch('/users/:id', userController.updateUser);
 router.delete('/users/:id', userController.deleteUser);
-
+router.get('users/:id/todos', userController.getAllToDosOfUser);
+router.get('users/:id/todos/:id', userController.getToDosByUserId);
 
 export default router;
