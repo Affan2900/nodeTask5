@@ -18,11 +18,15 @@ export const getToDoById = (req: Request, res: Response): void =>{
 }
 
 export const addToDo = (req: Request, res: Response): void =>{
-  const { title } = req.body;
+  const { title, userId } = req.body;
+
+  // Parse userId to number
+  const parsedUserId = Number(userId);
   // Create a new ToDo object
   const newToDo: toDo = {
     id : Math.floor(Math.random() * 1000),
     title,
+    userId: parsedUserId,
     isCompleted: false,
     createdDate: new Date(),
     updatedDate: new Date(),
@@ -36,11 +40,12 @@ export const addToDo = (req: Request, res: Response): void =>{
 
 export const updateToDo = (req: Request, res: Response): void =>{
   const id = Number(req.params.id); // Convert the id to a number
-  const { title } = req.body;
+  const { title, userId } = req.body;
   const toDo = toDoService.getToDoById(id);
   if(toDo){
     // Update the toDo in the database
     toDo.title = title;
+    toDo.userId = userId;
     toDo.updatedDate = new Date();
     toDoService.updateToDo(id,toDo);
 

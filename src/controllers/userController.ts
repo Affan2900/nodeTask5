@@ -40,13 +40,13 @@ export const addUser = (req: Request, res: Response): void => {
 
 export const updateUser = (req: Request, res: Response): void =>{
   const id = Number(req.params.id); // Convert the id to a number
-  const { name, email, password } = req.body;
+  const { newName, newEmail, newPassword } = req.body;
   const user = userService.getUserById(id);
   if(user){
     // Update the user in the database
-    user.name = name;
-    user.email = email;
-    user.password = password;
+    user.name = newName;
+    user.email = newEmail;
+    user.password = newPassword;
     user.updatedDate = new Date();
     userService.updateUser(id,user);
 
@@ -78,7 +78,7 @@ export const getAllToDosOfUser = (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Invalid user ID' });
   }
 
-  const todos = toDoService.getToDoById(userId);
+  const todos = toDoService.getToDosByUserId(userId);
 
   if (todos === undefined) {
     return res.status(404).json({ message: 'No todos found for this user' });
@@ -87,7 +87,7 @@ export const getAllToDosOfUser = (req: Request, res: Response) => {
   res.json(todos);
 }
 
-export const getToDosByUserId = (req: Request, res: Response) => {
+export const getToDoByUserId = (req: Request, res: Response) => {
   try {
     // Get the user ID from the request
     const userId = Number(req.params.id);

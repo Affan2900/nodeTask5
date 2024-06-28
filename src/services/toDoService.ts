@@ -12,6 +12,8 @@ export const getToDoById = (id: number): toDo | undefined =>{
   return undefined;
 }
 
+
+
 export const addToDo = (toDo: toDo): void =>{
   toDos.push(toDo);
 }
@@ -28,3 +30,8 @@ export const updateToDo = (id: number, updatedToDo: toDo): toDo | undefined  =>{
 export const deleteToDo = (id: number): void =>{
   toDos = toDos.filter(toDo => toDo.id !== id);
 }
+
+// Method to get todos by user ID
+export const getToDosByUserId = (userId: number): toDo[] => {
+  return toDos.filter(todo => todo.userId === userId);
+};

@@ -10,6 +10,6 @@ router.put('/users/:id', userController.updateUser);
 router.patch('/users/:id', userController.updateUser);
 router.delete('/users/:id', userController.deleteUser);
 router.get('users/:id/todos', userController.getAllToDosOfUser);
-router.get('users/:id/todos/:id', userController.getToDosByUserId);
+router.get('users/:id/todos/:id', userController.getToDoByUserId);
 
 export default router;
