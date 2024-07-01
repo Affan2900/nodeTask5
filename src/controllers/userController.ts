@@ -3,11 +3,13 @@ import { User } from '../models/userModel';
 import * as userService from '../services/userService';
 import * as toDoService from '../services/toDoService';
 
+//Method to get all users
 export const getAllUsers = (req: Request, res: Response): void => {
   const users = userService.getAllUsers();
   res.json(users);
 }
 
+//Method to get user by id
 export const getUserById = (req: Request, res: Response): void => {
   const id = Number(req.params.id); // Convert the id to a number
   const user = userService.getUserById(id);
@@ -18,6 +20,7 @@ export const getUserById = (req: Request, res: Response): void => {
   }
 }
 
+//Method to add user
 export const addUser = (req: Request, res: Response): void => {
   const { name, email, password } = req.body;
   // Create a new User object
@@ -38,25 +41,33 @@ export const addUser = (req: Request, res: Response): void => {
   res.status(201).json(newUser);
 }
 
-export const updateUser = (req: Request, res: Response): void =>{
+//Method to update user
+export const updateUser = (req: Request, res: Response): void => {
   const id = Number(req.params.id); // Convert the id to a number
-  const { newName, newEmail, newPassword } = req.body;
+  const { name, email, password } = req.body;
   const user = userService.getUserById(id);
-  if(user){
-    // Update the user in the database
-    user.name = newName;
-    user.email = newEmail;
-    user.password = newPassword;
-    user.updatedDate = new Date();
-    userService.updateUser(id,user);
+
+  if (user) {
+    // Update the user in the database with the spread operator
+    const updatedUser = {
+      ...user,
+      name: name !== undefined ? name : user.name,
+      email: email !== undefined ? email : user.email,
+      password: password !== undefined ? password : user.password,
+      updatedDate: new Date(),
+    };
+
+    userService.updateUser(id, updatedUser);
 
     // Send response back to client
-    res.status(200).json(user);
-  }else{
-    res.status(404).json({ message: 'User not found' })
+    res.status(200).json(updatedUser);
+  } else {
+    res.status(404).json({ message: 'User not found' });
   }
-}
+};
 
+
+//Method to delete user
 export const deleteUser = (req: Request, res: Response): void =>{
   const id = Number(req.params.id); // Convert the id to a number
   const user = userService.getUserById(id);
@@ -65,12 +76,16 @@ export const deleteUser = (req: Request, res: Response): void =>{
     userService.deleteUser(id);
 
     // Send response back to client
-    res.status(200).json({ message: 'User deleted successfully' });
+    res.status(200).json({
+      message: 'User deleted successfully',
+      user
+    });
   }else{
     res.status(404).json({ message: 'User not found' })
   }
 }
 
+//Method to get all toDos of user
 export const getAllToDosOfUser = (req: Request, res: Response) => {
   const userId = parseInt(req.params.id, 10); // Convert the id from string to number
 
@@ -87,19 +102,24 @@ export const getAllToDosOfUser = (req: Request, res: Response) => {
   res.json(todos);
 }
 
-export const getToDoByUserId = (req: Request, res: Response) => {
-  try {
+//Method to get toDo by userId and toDoId
+export const getToDoByUserIdAndToDoId = (req: Request, res: Response) => {
     // Get the user ID from the request
-    const userId = Number(req.params.id);
+    const userId = parseInt(req.params.userId);
+    //Get the toDo Id
+    const toDoId = Number(req.params.id);
     if (isNaN(userId)) {
       return res.status(400).json({ error: 'Invalid user ID' });
     }
-    const todos = toDoService.getToDoById(userId);
-    if (todos === undefined) {
-      return res.status(404).json({ message: 'No todos found for this user' });
+
+    const user = userService.getUserById(userId);
+    if (user === undefined) {
+      return res.status(404).json({ message: 'User not found' });
     }
-    res.json(todos);
-  } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
+
+    const todo = toDoService.getToDoById(toDoId);
+    if (todo === undefined) {
+      return res.status(404).json({ message: 'No todo found for this user' });
+    }
+    res.json(todo);
 }

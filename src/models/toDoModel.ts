@@ -1,4 +1,5 @@
-export interface toDo{
+// toDo model
+export interface toDo {
   id: number;
   title: string;
   userId: number;
