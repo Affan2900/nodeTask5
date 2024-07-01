@@ -4,10 +4,10 @@ import userRoutes from './routes/userRoutes';
 import toDoRoutes from './routes/toDoRoutes';
 
 
-
+// Create an express app
 const app = express();
 
-
+//Middleware
 app.use(bodyParser.json());
 
 //Routes
