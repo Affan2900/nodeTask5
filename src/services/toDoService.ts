@@ -9,11 +9,7 @@ export const getAllToDos = (): toDo[] => toDos;
 
 //Method to get toDo by id
 export const getToDoById = (id: number): toDo | undefined =>{
-  const toDo = toDos.find( toDo => toDo.id === id)
-  if(toDo){
-    return toDo;
-  }
-  return undefined;
+  return toDos.find( toDo => toDo.id === id)
 }
 
 
@@ -43,6 +39,6 @@ export const getToDosByUserId = (userId: number): toDo[] => {
 };
 
 // Method to get todo by user ID
-export const getToDoByUserId = (userId: number): toDo | undefined => {
-  return toDos.find(todo => todo.userId === userId);
+export const getToDoByUserIdAndToDoId = (userId: number, toDoId: number): toDo | undefined => {
+  return toDos.find(todo => todo.userId === userId && todo.id === toDoId);
 };

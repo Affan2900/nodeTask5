@@ -105,7 +105,7 @@ export const getAllToDosOfUser = (req: Request, res: Response) => {
 //Method to get toDo by userId and toDoId
 export const getToDoByUserIdAndToDoId = (req: Request, res: Response) => {
     // Get the user ID from the request
-    const userId = parseInt(req.params.userId);
+    const userId = Number(req.params.userId);
     //Get the toDo Id
     const toDoId = Number(req.params.id);
     if (isNaN(userId)) {
@@ -117,7 +117,7 @@ export const getToDoByUserIdAndToDoId = (req: Request, res: Response) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const todo = toDoService.getToDoById(toDoId);
+    const todo = toDoService.getToDoByUserIdAndToDoId(userId, toDoId);
     if (todo === undefined) {
       return res.status(404).json({ message: 'No todo found for this user' });
     }

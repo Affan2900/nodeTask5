@@ -9,11 +9,7 @@ export const getAllUsers = (): User[] => users;
 
 //Method to get user by id
 export const getUserById = (id: number): User | undefined =>{
-  const user = users.find( user => user.id === id)
-  if(user){
-    return user;
-  }
-  return undefined;
+  return users.find( user => user.id === id)
 }
 
 //Method to add user
