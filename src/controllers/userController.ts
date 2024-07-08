@@ -87,7 +87,7 @@ export const deleteUser = (req: Request, res: Response): void =>{
 
 //Method to get all toDos of user
 export const getAllToDosOfUser = (req: Request, res: Response) => {
-  const userId = parseInt(req.params.id, 10); // Convert the id from string to number
+  const userId = Number(req.params.id); // Convert the id from string to number
 
   if (isNaN(userId)) {
     return res.status(400).json({ error: 'Invalid user ID' });

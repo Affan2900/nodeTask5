@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { body,param, validationResult } from 'express-validator';
-import {getAllUsers} from './services/userService'; // Import your user service here
-import {getAllToDos} from './services/toDoService'; // Import your todo service here
+import {getAllUsers} from './services/userService'; // Import your user service 
+import {getAllToDos, getToDosByUserId} from './services/toDoService'; // Import your todo service 
 
 // Middleware to check if users list is empty
 export function checkUsersList(req: Request, res: Response, next: NextFunction) {
@@ -54,6 +54,17 @@ export function checkToDosList(req: Request, res: Response, next: NextFunction) 
 
   if (toDos.length === 0) {
     return res.status(200).json({ message: "There are no current toDos" });
+  }
+  next();
+}
+
+// Middleware to check if users list is empty of a specific user
+export function checkToDosListOfUser(req: Request, res: Response, next: NextFunction) {
+  const userId = Number(req.params.userId); // Convert the id from string to number
+  const toDos = getToDosByUserId(userId); // Get all toDos of a specific user from your todo service
+
+  if (toDos.length === 0) {
+    return res.status(200).json({ message: "There are no current toDos of this user" });
   }
   next();
 }
