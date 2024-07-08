@@ -14,13 +14,7 @@ export function checkUsersList(req: Request, res: Response, next: NextFunction) 
 }
 
 // Middleware to validate 'GET' request for a user by ID
-export const validateUserGetById = [
-  param('id').isInt().withMessage('User ID must be an integer'),
-  handleValidationErrors
-];
-
-// Middleware to validate 'DELETE' request for a user by ID
-export const validateUserDeleteById = [
+export const validateUserById = [
   param('id').isInt().withMessage('User ID must be an integer'),
   handleValidationErrors
 ];
@@ -70,13 +64,7 @@ export function checkToDosListOfUser(req: Request, res: Response, next: NextFunc
 }
 
 // Middleware to validate 'GET' request for a to-do by ID
-export const validateToDoGetById = [
-  param('id').isInt().withMessage('To-do ID must be an integer'),
-  handleValidationErrors
-];
-
-// Middleware to validate 'DELETE' request for a to-do by ID
-export const validateToDoDeleteById = [
+export const validateToDoById = [
   param('id').isInt().withMessage('To-do ID must be an integer'),
   handleValidationErrors
 ];
