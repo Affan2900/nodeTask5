@@ -1,6 +1,8 @@
-// User model
-export interface User {
-  id: number;
+import { Schema, model } from 'mongoose';
+import shortid from 'shortid';
+
+interface IUser {
+  id: string;
   name: string;
   email: string;
   password: string;
@@ -8,3 +10,16 @@ export interface User {
   createdDate: Date;
   updatedDate: Date;
 }
+
+const userSchema = new Schema<IUser>({
+  id: { type: String, default: shortid.generate, unique: true },
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  isDisabled: { type: Boolean, default: false },
+  createdDate: { type: Date, default: Date.now },
+  updatedDate: { type: Date, default: Date.now }
+});
+
+const User = model<IUser>('User', userSchema);
+export { User, IUser };
