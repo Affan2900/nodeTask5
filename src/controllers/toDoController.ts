@@ -1,95 +1,108 @@
 import { Request, Response } from 'express';
-import { toDo } from '../models/toDoModel';
-import * as toDoService from '../services/toDoService';
-import * as userService from '../services/userService';
+import { ToDo, IToDo } from '../models/toDoModel';
+import { User,IUser } from '../models/userModel';
+import shortid from 'shortid';
 
 //Method to get all toDos
-export const getAllToDos = (req: Request, res: Response): void =>{
-  const toDos = toDoService.getAllToDos();
+export const getAllToDos = async (req: Request, res: Response): Promise<void> =>{
+  try{
+  const toDos:IToDo[] = await ToDo.find({});
   res.json(toDos);
-}
-
-//Method to get toDo by id
-export const getToDoById = (req: Request, res: Response): void =>{
-  const id = Number(req.params.id); // Convert the id to a number
-  const toDo = toDoService.getToDoById(id);
-  if(toDo){
-    res.json(toDo);
-  }else{
-    res.status(404).json({ message: 'ToDo not found' })
+  }catch(error){
+  res.status(500).json({ message: 'Error getting todos', error });
   }
 }
 
+//Method to get toDo by id
+export const getToDoById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const toDo: IToDo | null = await ToDo.findById(req.params.id);
+    if (toDo) {
+      res.json(toDo);
+    } else {
+      res.status(404).json({ message: 'ToDo not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error getting todo', error });
+  }
+};
+
 //Method to add toDo
-export const addToDo = (req: Request, res: Response): void =>{
+export const addToDo = async (req: Request, res: Response): Promise<void> =>{
+  try{
   const { title, userId } = req.body;
 
-  // Parse userId to number
-  const parsedUserId = Number(userId);
-
-  //find parsedUserId in users
-  const user = userService.getUserById(parsedUserId);
+  //find user in users
+  const user:IUser | null = await User.findById(userId); 
   if(user){
     // Create a new ToDo object
-    const newToDo: toDo = {
-      id : Math.floor(Math.random() * 1000),
+    const newToDo = new ToDo ({
+      id : shortid.generate(),
       title,
-      userId: parsedUserId,
+      userId: userId,
       isCompleted: false,
       createdDate: new Date(),
       updatedDate: new Date(),
-    }
-    toDoService.addToDo(newToDo);
+    })
+    
+    const savedToDo: IToDo = await newToDo.save();
 
     // Send response back to client
-    res.status(201).json(newToDo);
+    res.status(201).json(savedToDo);
   }
   else{
     res.status(404).json({ message: 'User not found' })
   }
+}catch(error){  
+  res.status(500).json({ message: 'Error creating todo', error });  
+}
 }
 
 //Method to update toDo
-export const updateToDo = (req: Request, res: Response): void =>{
-  const id = Number(req.params.id); // Convert the id to a number
+export const updateToDo = async (req: Request, res: Response): Promise<Response<any, Record<string, any>>> =>{
+  try{
+  const id = req.params.id; 
   const { title, userId } = req.body;
-  // Parse userId to number
-  const parsedUserId = Number(userId);
 
-  const toDo = toDoService.getToDoById(id);
-  if(toDo){
-    // Update the toDo in the database
-    const updatedToDo = {
-      ...toDo,
-      title: title !== undefined ? title : toDo.title,
-      userId: userId !== undefined ? parsedUserId : toDo.userId,
-      updatedDate: new Date(),
-    }
-    
-    toDoService.updateToDo(id,updatedToDo);
+  const updatedFields: Partial<IToDo> = {
+    title: title !== undefined ? title : undefined,
+    userId: userId !== undefined ? userId : undefined,
+    updatedDate: new Date(),
+  };
 
-    // Send response back to client
+  const updatedToDo =  await ToDo.findByIdAndUpdate(
+    id,
+      updatedFields,
+      { new: true, runValidators: true }
+  );
+  if(updatedToDo){
     res.status(200).json(updatedToDo);
-  }else{
-    res.status(404).json({ message: 'ToDo not found' })
+    } else {
+      res.status(404).json({ message: 'To Do not found' });
+    }
+  }catch(error){
+    res.status(500).json({ message: 'Error updating todo', error });
   }
+  return res;
 }
 
 //Method to delete toDo
-export const deleteToDo = (req: Request, res: Response): void =>{
-  const id = Number(req.params.id); // Convert the id to a number
-  const toDo = toDoService.getToDoById(id);
-  if(toDo){
-    // Delete the toDo from the database
-    toDoService.deleteToDo(id);
-
+export const deleteToDo = async (req: Request, res: Response): Promise<void> =>{
+  try{
+  const id = req.params.id;
+  const deletedToDo:IToDo | null = await ToDo.findByIdAndDelete({id});
+  if (deletedToDo) {
     // Send response back to client
     res.status(200).json({
-      message: 'ToDo deleted successfully',
-      toDo});
-  }else{
-    res.status(404).json({ message: 'ToDo not found' })
-  } 
+      message: 'To-Do deleted successfully',
+      toDo: deletedToDo,
+    });
+  } else {
+    res.status(404).json({ message: 'To-Do not found' });
+  }
+}catch(error){
+  res.status(500).json({ message: 'Error deleting todo', error });
+}
 }
 
 

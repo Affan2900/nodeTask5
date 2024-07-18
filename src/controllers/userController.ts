@@ -1,125 +1,166 @@
 import { Request, Response } from 'express';
-import { User } from '../models/userModel';
-import * as userService from '../services/userService';
-import * as toDoService from '../services/toDoService';
+import { User, IUser } from '../models/userModel';
+import { ToDo, IToDo } from '../models/toDoModel';
+import shortid from 'shortid';
 
 //Method to get all users
-export const getAllUsers = (req: Request, res: Response): void => {
-  const users = userService.getAllUsers();
-  res.json(users);
+export const getAllUsers = async (req: Request, res: Response)=> {
+  try {
+    const users: IUser[] = await User.find({});
+    res.json(users);
+  } catch (error) {
+    // Handle the error
+    if (error instanceof Error) {
+      res.status(400).json({ message: error.message });
+    } else {
+      res.status(400).json({ message: 'An unknown error occurred' });
+    }
+  }
 }
 
 //Method to get user by id
-export const getUserById = (req: Request, res: Response): void => {
-  const id = Number(req.params.id); // Convert the id to a number
-  const user = userService.getUserById(id);
+export const getUserById = async (req: Request, res: Response): Promise<void> => {
+  try{
+  const user:IUser | null = await User.findById(req.params.id);
   if(user){
     res.json(user);
   }else{
     res.status(404).json({ message: 'User not found' })
   }
+} catch (error) {
+  res.status(500).json({ message: 'Error getting user', error });
+  }
 }
 
 //Method to add user
-export const addUser = (req: Request, res: Response): void => {
-  const { name, email, password } = req.body;
+export const addUser = async (req: Request, res: Response): Promise<void> => {
+  try{ // To avoid unhandled promise rejection
+    const { name, email, password } = req.body;
   // Create a new User object
-  const newUser: User = {
-    id: Math.floor(Math.random() * 1000), // Example ID generation, use a proper ID generator or UUID in real cases
+  const newUser = new User ({
+    id: shortid.generate(),
     name,
     email,
     password,
     isDisabled: false,
     createdDate: new Date(),
     updatedDate: new Date(),
-  };
+  });
 
   // Call the service to add the user
-  userService.addUser(newUser);
+  const savedUser: IUser = await newUser.save();
 
   // Send response back to client
-  res.status(201).json(newUser);
+  res.status(201).json(savedUser);
+  } catch (error) {
+    res.status(500).json({ message: 'Error creating user', error });
+  }
 }
 
 //Method to update user
-export const updateUser = (req: Request, res: Response): void => {
-  const id = Number(req.params.id); // Convert the id to a number
-  const { name, email, password } = req.body;
-  const user = userService.getUserById(id);
+export const updateUser = async (req: Request, res: Response): Promise<Response<any, Record<string, any>>> => {
+  try {
+    const id = req.params.id;
+    const { name, email, password } = req.body;
 
-  if (user) {
-    // Update the user in the database with the spread operator
-    const updatedUser = {
-      ...user,
-      name: name !== undefined ? name : user.name,
-      email: email !== undefined ? email : user.email,
-      password: password !== undefined ? password : user.password,
+    const updatedFields: Partial<IUser> = {
+      name: name !== undefined ? name : undefined,
+      email: email !== undefined ? email : undefined,
+      password: password !== undefined ? password : undefined,
       updatedDate: new Date(),
     };
 
-    userService.updateUser(id, updatedUser);
+    // Find the user by ID and update it
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      updatedFields,
+      { new: true, runValidators: true }
+    );
 
-    // Send response back to client
-    res.status(200).json(updatedUser);
-  } else {
-    res.status(404).json({ message: 'User not found' });
+    if (updatedUser) {
+      res.status(200).json(updatedUser);
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
   }
+  catch (error) {
+    res.status(500).json({ message: 'Error updating user', error });
+  }
+  return res;
 };
 
 
 //Method to delete user
-export const deleteUser = (req: Request, res: Response): void =>{
-  const id = Number(req.params.id); // Convert the id to a number
-  const user = userService.getUserById(id);
-  if(user){
-    // Delete the user from the database
-    userService.deleteUser(id);
+export const deleteUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id;
 
-    // Send response back to client
-    res.status(200).json({
-      message: 'User deleted successfully',
-      user
-    });
-  }else{
-    res.status(404).json({ message: 'User not found' })
+    // Find the user by ID and delete it | method requires a single argument and not an object
+    const deletedUser: IUser | null = await User.findByIdAndDelete(id);
+
+    if (deletedUser) {
+      // Send response back to client
+      res.status(200).json({
+        message: 'User deleted successfully',
+        user: deletedUser,
+      });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting user', error });
   }
-}
+};
+
 
 //Method to get all toDos of user
-export const getAllToDosOfUser = (req: Request, res: Response) => {
-  const userId = Number(req.params.id); // Convert the id from string to number
+export const getAllToDosOfUser = async (req: Request, res: Response):Promise<Response<any, Record<string, any>>> => {
+  try{
+  const id = req.params.id; 
 
-  if (isNaN(userId)) {
-    return res.status(400).json({ error: 'Invalid user ID' });
-  }
+  const user:IUser | null = await User.findOne({ id });
+  if(user){
+  const todos:IToDo[] = await ToDo.find({ id });
 
-  const todos = toDoService.getToDosByUserId(userId);
-
-  if (todos === undefined) {
+  if (todos.length === 0) {
     return res.status(404).json({ message: 'No todos found for this user' });
   }
 
   res.json(todos);
+  } else{
+    res.status(404).json({ message: 'User not found' })
+  }
+  }catch(error){
+    res.status(500).json({ message: 'Error getting todos', error });
+  }
+  return res;
 }
 
 //Method to get toDo by userId and toDoId
-export const getToDoByUserIdAndToDoId = (req: Request, res: Response) => {
+export const getToDoByUserIdAndToDoId = async (req: Request, res: Response):Promise<Response<any, Record<string, any>>> => {
+
+    try{
     // Get the user ID from the request
-    const userId = Number(req.params.userId);
+    const userId = req.params.id;
     //Get the toDo Id
-    const toDoId = Number(req.params.id);
-    if (isNaN(userId)) {
-      return res.status(400).json({ error: 'Invalid user ID' });
-    }
+    const toDoId = req.params.toDoId;
 
-    const user = userService.getUserById(userId);
-    if (user === undefined) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    
+    const user:IUser | null = await User.findOne({ id: userId }); 
 
-    const todo = toDoService.getToDoByUserIdAndToDoId(userId, toDoId);
-    if (todo === undefined) {
-      return res.status(404).json({ message: 'No todo found for this user' });
+    if (user) {
+      const todo:IToDo | null = await ToDo.findOne({ id: toDoId });
+      if (todo) {
+        res.json(todo);
+      } else {
+        res.status(404).json({ message: 'No todo found for this user' });
+      }
+    }else{
+      res.status(404).json({ message: 'User not found' });
     }
-    res.json(todo);
+  }catch(error){
+    res.status(500).json({ message: 'Error getting todo', error });
+  }
+
+    return res;
 }
