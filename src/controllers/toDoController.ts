@@ -14,21 +14,21 @@ export const getAllToDos = async (req: Request, res: Response): Promise<void> =>
 }
 
 //Method to get toDo by id
-export const getToDoById = async (req: Request, res: Response): Promise<void> => {
+export const getToDoById = async (req: Request, res: Response): Promise<Response<any, Record<string, any>>> => {
   try {
     const toDo: IToDo | null = await ToDo.findById(req.params.id);
     if (toDo) {
-      res.json(toDo);
+      return res.json(toDo);
     } else {
-      res.status(404).json({ message: 'ToDo not found' });
+      return res.status(404).json({ message: 'ToDo not found' });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Error getting todo', error });
+    return res.status(500).json({ message: 'Error getting todo', error });
   }
 };
 
 //Method to add toDo
-export const addToDo = async (req: Request, res: Response): Promise<void> =>{
+export const addToDo = async (req: Request, res: Response): Promise<Response<any, Record<string,any>>> =>{
   try{
   const { title, userId } = req.body;
 
@@ -48,13 +48,13 @@ export const addToDo = async (req: Request, res: Response): Promise<void> =>{
     const savedToDo: IToDo = await newToDo.save();
 
     // Send response back to client
-    res.status(201).json(savedToDo);
+    return res.status(201).json(savedToDo);
   }
   else{
-    res.status(404).json({ message: 'User not found' })
+    return res.status(404).json({ message: 'User not found' })
   }
 }catch(error){  
-  res.status(500).json({ message: 'Error creating todo', error });  
+  return res.status(500).json({ message: 'Error creating todo', error });  
 }
 }
 
@@ -64,22 +64,27 @@ export const updateToDo = async (req: Request, res: Response): Promise<Response<
   const id = req.params.id; 
   const { title, userId } = req.body;
 
-  const updatedFields: Partial<IToDo> = {
-    title: title !== undefined ? title : undefined,
-    userId: userId !== undefined ? userId : undefined,
-    updatedDate: new Date(),
-  };
-
-  const updatedToDo =  await ToDo.findByIdAndUpdate(
-    id,
-      updatedFields,
-      { new: true, runValidators: true }
-  );
-  if(updatedToDo){
-    res.status(200).json(updatedToDo);
-    } else {
-      res.status(404).json({ message: 'To Do not found' });
-    }
+  const user = await User.findById(userId);
+  if(!user){
+    return res.status(404).json({ message: 'User not found' });
+  }else{
+    const updatedFields: Partial<IToDo> = {
+      title: title !== undefined ? title : undefined,
+      userId: userId !== undefined ? userId : undefined,
+      updatedDate: new Date(),
+    };
+  
+    const updatedToDo =  await ToDo.findByIdAndUpdate(
+      id,
+        updatedFields,
+        { new: true, runValidators: true }
+    );
+    if(updatedToDo){
+      res.status(200).json(updatedToDo);
+      } else {
+        res.status(404).json({ message: 'To Do not found' });
+      }
+  }
   }catch(error){
     res.status(500).json({ message: 'Error updating todo', error });
   }
@@ -87,21 +92,21 @@ export const updateToDo = async (req: Request, res: Response): Promise<Response<
 }
 
 //Method to delete toDo
-export const deleteToDo = async (req: Request, res: Response): Promise<void> =>{
+export const deleteToDo = async (req: Request, res: Response): Promise<Response<any, Record<string, any>>> =>{
   try{
   const id = req.params.id;
-  const deletedToDo:IToDo | null = await ToDo.findByIdAndDelete({id});
+  const deletedToDo:IToDo | null = await ToDo.findByIdAndDelete(id);
   if (deletedToDo) {
     // Send response back to client
-    res.status(200).json({
+    return res.status(200).json({
       message: 'To-Do deleted successfully',
       toDo: deletedToDo,
     });
   } else {
-    res.status(404).json({ message: 'To-Do not found' });
+    return res.status(404).json({ message: 'To-Do not found' });
   }
 }catch(error){
-  res.status(500).json({ message: 'Error deleting todo', error });
+  return res.status(500).json({ message: 'Error deleting todo', error });
 }
 }
 

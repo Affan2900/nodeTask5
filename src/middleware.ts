@@ -4,27 +4,26 @@ import {User,IUser} from './models/userModel';
 import {ToDo,IToDo} from './models/toDoModel';
 
 // Middleware to check if users list is empty
-export const  checkUsersList = async (req: Request, res: Response, next: NextFunction): Promise<Response<any, Record<string, any>>> => {
+export const  checkUsersList = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     // Get all users
     const users: IUser[] = await User.find({});
 
     if (users.length === 0) {
       res.status(200).json({ message: 'There are no current users' });
+    }else{
+      next();
     }
-
-    next();
   } catch (error) {
     res.status(500).json({ message: 'Error checking users list', error });
   }
-  return res;
 }
 
 //Middleware to check if user is disabled
 export const checkUserIsDisabled = async(req: Request, res: Response, next: NextFunction):Promise<void>=> {
   try{
   const userId = req.params.id; 
-  const user: IUser | null = await User.findOne({id: userId});
+  const user: IUser | null = await User.findById(userId);
 
   if (user!.isDisabled) {
     res.status(200).json({ message: "This user is disabled" });
@@ -39,18 +38,17 @@ export const checkUserIsDisabled = async(req: Request, res: Response, next: Next
 export const validateUserById = [
   param('id').isMongoId().withMessage('Invalid user ID'),
   handleValidationErrors,
-  async (req: Request, res: Response, next: NextFunction): Promise<Response<any, Record<string, any>>> => {
-
+  async (req: Request, res: Response, next: NextFunction): Promise<Response<any, Record<string,any>>> => {
     const userId = req.params.id;
-    try{
+    try {
       const user: IUser | null = await User.findById(userId);
 
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
-      next();
-    }catch(error){
-      res.status(500).json({ message: 'Error getting user', error });
+      next(); // Call next() to pass control to the next middleware
+    } catch (error) {
+      return res.status(500).json({ message: 'Error getting user', error });
     }
     return res;
   },
@@ -74,15 +72,15 @@ export const validateUserUpdate = [
 
 // Middleware to validate 'GET' request for a specific to-do of a user
 export const validateUserIdAndToDoIdParams = [
-  param('id').isMongoId().withMessage('User ID must be an integer'),
-  param('toDoId').isMongoId().withMessage('To-do ID must be an integer'),
+  param('id').isMongoId().withMessage('User ID must be a MongoDB ID'),
+  param('toDoId').isMongoId().withMessage('To-do ID must be a MongoDB ID'),
   handleValidationErrors,
   async (req: Request, res: Response, next: NextFunction):Promise<Response<any,Record<string,any>>> => {
     try{
     const userId = req.params.id;
     const toDoId = req.params.toDoId;
 
-    const user:IUser | null = await User.findOne({id: userId});
+    const user:IUser | null = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -120,21 +118,21 @@ export const checkToDosList = async (req: Request, res: Response, next: NextFunc
 export const checkToDosListOfUser = async (req: Request, res: Response, next: NextFunction):Promise<Response<any,Record<string,any>>> => {
   try{
   const userId = req.params.id;
-  const toDos:IToDo[] = await ToDo.find({id: userId}); // Get all toDos of a specific user from your todo service
+  const toDos:IToDo[] = await ToDo.find({userId: userId}); // Get all toDos of a specific user from your todo service
 
   if (toDos.length === 0) {
     return res.status(200).json({ message: "There are no current toDos of this user" });
   }
   next();
 }catch(error){
-  res.status(500).json({ message: 'Error checking todos list', error });
+  return res.status(500).json({ message: 'Error checking todos list', error });
 }
   return res;
 }
 
 // Middleware to validate 'GET' request for a to-do by ID
 export const validateToDoById = [
-  param('id').isMongoId().withMessage('To-do ID must be an integer'),
+  param('id').isMongoId().withMessage('To-do ID must be a MongoDB ID'),
   handleValidationErrors,
   async (req: Request, res: Response, next: NextFunction):Promise<Response<any,Record<string,any>>> => {
     try{

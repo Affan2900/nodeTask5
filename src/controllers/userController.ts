@@ -4,7 +4,7 @@ import { ToDo, IToDo } from '../models/toDoModel';
 import shortid from 'shortid';
 
 //Method to get all users
-export const getAllUsers = async (req: Request, res: Response)=> {
+export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
   try {
     const users: IUser[] = await User.find({});
     res.json(users);
@@ -19,22 +19,23 @@ export const getAllUsers = async (req: Request, res: Response)=> {
 }
 
 //Method to get user by id
-export const getUserById = async (req: Request, res: Response): Promise<void> => {
+export const getUserById = async (req: Request, res: Response): Promise<Response<any, Record<string, any>>> => {
   try{
+  
   const user:IUser | null = await User.findById(req.params.id);
   if(user){
-    res.json(user);
+    return res.json(user);
   }else{
-    res.status(404).json({ message: 'User not found' })
+    return res.status(404).json({ message: 'User not found' })
   }
 } catch (error) {
-  res.status(500).json({ message: 'Error getting user', error });
+  return res.status(500).json({ message: 'Error getting user', error });
   }
 }
 
 //Method to add user
-export const addUser = async (req: Request, res: Response): Promise<void> => {
-  try{ // To avoid unhandled promise rejection
+export const addUser = async (req: Request, res: Response): Promise<Response<any, Record<string, any>>> => {
+  try{ 
     const { name, email, password } = req.body;
   // Create a new User object
   const newUser = new User ({
@@ -51,9 +52,10 @@ export const addUser = async (req: Request, res: Response): Promise<void> => {
   const savedUser: IUser = await newUser.save();
 
   // Send response back to client
-  res.status(201).json(savedUser);
+  return res.status(201).json(savedUser);
   } catch (error) {
-    res.status(500).json({ message: 'Error creating user', error });
+    console.error('Error creating user:', error);
+    return res.status(500).json({ message: 'Error creating user' });
   }
 }
 
@@ -91,7 +93,7 @@ export const updateUser = async (req: Request, res: Response): Promise<Response<
 
 
 //Method to delete user
-export const deleteUser = async (req: Request, res: Response): Promise<void> => {
+export const deleteUser = async (req: Request, res: Response): Promise<Response<any, Record<string,any>>> => {
   try {
     const id = req.params.id;
 
@@ -100,15 +102,15 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
 
     if (deletedUser) {
       // Send response back to client
-      res.status(200).json({
+      return res.status(200).json({
         message: 'User deleted successfully',
         user: deletedUser,
       });
     } else {
-      res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting user', error });
+    return res.status(500).json({ message: 'Error deleting user', error });
   }
 };
 
@@ -116,11 +118,10 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
 //Method to get all toDos of user
 export const getAllToDosOfUser = async (req: Request, res: Response):Promise<Response<any, Record<string, any>>> => {
   try{
-  const id = req.params.id; 
-
-  const user:IUser | null = await User.findOne({ id });
+  const userId = req.params.id;
+  const user:IUser | null = await User.findById(req.params.id);
   if(user){
-  const todos:IToDo[] = await ToDo.find({ id });
+  const todos:IToDo[] = await ToDo.find({ userId: userId });
 
   if (todos.length === 0) {
     return res.status(404).json({ message: 'No todos found for this user' });
@@ -128,10 +129,10 @@ export const getAllToDosOfUser = async (req: Request, res: Response):Promise<Res
 
   res.json(todos);
   } else{
-    res.status(404).json({ message: 'User not found' })
+    return res.status(404).json({ message: 'User not found' })
   }
   }catch(error){
-    res.status(500).json({ message: 'Error getting todos', error });
+    return res.status(500).json({ message: 'Error getting todos', error });
   }
   return res;
 }
@@ -140,27 +141,23 @@ export const getAllToDosOfUser = async (req: Request, res: Response):Promise<Res
 export const getToDoByUserIdAndToDoId = async (req: Request, res: Response):Promise<Response<any, Record<string, any>>> => {
 
     try{
-    // Get the user ID from the request
-    const userId = req.params.id;
-    //Get the toDo Id
-    const toDoId = req.params.toDoId;
-
+      const toDoId = req.params.toDoId;
+      const userId = req.params.id;
     
-    const user:IUser | null = await User.findOne({ id: userId }); 
-
+    const user:IUser | null = await User.findById(userId); 
     if (user) {
-      const todo:IToDo | null = await ToDo.findOne({ id: toDoId });
+      // console.log("toDoId:", toDoId, "userId:", userId);
+      
+      const todo:IToDo | null = await ToDo.findOne({ _id: toDoId, userId: userId });
       if (todo) {
-        res.json(todo);
+        return res.json(todo);
       } else {
-        res.status(404).json({ message: 'No todo found for this user' });
+        return res.status(404).json({ message: 'No todo found for this user' });
       }
     }else{
-      res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'User not found' });
     }
   }catch(error){
-    res.status(500).json({ message: 'Error getting todo', error });
+    return res.status(500).json({ message: 'Error getting todo', error });
   }
-
-    return res;
 }
