@@ -93,6 +93,7 @@ export const updateUser = async (req: Request, res: Response): Promise<Response<
 
 
 //Method to delete user
+
 export const deleteUser = async (req: Request, res: Response): Promise<Response<any, Record<string,any>>> => {
   try {
     const id = req.params.id;
@@ -101,6 +102,8 @@ export const deleteUser = async (req: Request, res: Response): Promise<Response<
     const deletedUser: IUser | null = await User.findByIdAndDelete(id);
 
     if (deletedUser) {
+      //delete ToDos asscoiated with the user
+      await ToDo.deleteMany({ userId: id });
       // Send response back to client
       return res.status(200).json({
         message: 'User deleted successfully',
