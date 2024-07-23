@@ -1,113 +1,90 @@
+// controllers/todoController.ts
+
 import { Request, Response } from 'express';
 import { ToDo, IToDo } from '../models/toDoModel';
-import { User,IUser } from '../models/userModel';
+import { User, IUser } from '../models/userModel';
 import shortid from 'shortid';
 
-//Method to get all toDos
-export const getAllToDos = async (req: Request, res: Response): Promise<void> =>{
-  try{
-  const toDos:IToDo[] = await ToDo.find({});
+// Method to get all toDos
+export const getAllToDos = async (req: Request, res: Response): Promise<void> => {
+  const toDos: IToDo[] = await ToDo.find({});
   res.json(toDos);
-  }catch(error){
-  res.status(500).json({ message: 'Error getting todos', error });
-  }
-}
+};
 
-//Method to get toDo by id
-export const getToDoById = async (req: Request, res: Response): Promise<Response<any, Record<string, any>>> => {
-  try {
-    const toDo: IToDo | null = await ToDo.findById(req.params.id);
-    if (toDo) {
-      return res.json(toDo);
-    } else {
-      return res.status(404).json({ message: 'ToDo not found' });
-    }
-  } catch (error) {
-    return res.status(500).json({ message: 'Error getting todo', error });
+// Method to get toDo by id
+export const getToDoById = async (req: Request, res: Response): Promise<void> => {
+  const toDo: IToDo | null = await ToDo.findById(req.params.id);
+  if (toDo) {
+    res.json(toDo);
+  } else {
+    res.status(404).json({ message: 'ToDo not found' });
   }
 };
 
-//Method to add toDo
-export const addToDo = async (req: Request, res: Response): Promise<Response<any, Record<string,any>>> =>{
-  try{
+// Method to add toDo
+export const addToDo = async (req: Request, res: Response): Promise<void> => {
   const { title, userId } = req.body;
 
-  //find user in users
-  const user:IUser | null = await User.findById(userId); 
-  if(user){
-    // Create a new ToDo object
-    const newToDo = new ToDo ({
-      id : shortid.generate(),
-      title,
-      userId: userId,
-      isCompleted: false,
-      createdDate: new Date(),
-      updatedDate: new Date(),
-    })
-    
-    const savedToDo: IToDo = await newToDo.save();
-
-    // Send response back to client
-    return res.status(201).json(savedToDo);
+  const user: IUser | null = await User.findById(userId);
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return;
   }
-  else{
-    return res.status(404).json({ message: 'User not found' })
-  }
-}catch(error){  
-  return res.status(500).json({ message: 'Error creating todo', error });  
-}
-}
 
-//Method to update toDo
-export const updateToDo = async (req: Request, res: Response): Promise<Response<any, Record<string, any>>> =>{
-  try{
-  const id = req.params.id; 
+  const newToDo = new ToDo({
+    id: shortid.generate(),
+    title,
+    userId,
+    isCompleted: false,
+    createdDate: new Date(),
+    updatedDate: new Date(),
+  });
+
+  const savedToDo: IToDo = await newToDo.save();
+  res.status(201).json(savedToDo);
+};
+
+// Method to update toDo
+export const updateToDo = async (req: Request, res: Response): Promise<void> => {
+  const id = req.params.id;
   const { title, userId } = req.body;
 
   const user = await User.findById(userId);
-  if(!user){
-    return res.status(404).json({ message: 'User not found' });
-  }else{
-    const updatedFields: Partial<IToDo> = {
-      title: title !== undefined ? title : undefined,
-      userId: userId !== undefined ? userId : undefined,
-      updatedDate: new Date(),
-    };
-  
-    const updatedToDo =  await ToDo.findByIdAndUpdate(
-      id,
-        updatedFields,
-        { new: true, runValidators: true }
-    );
-    if(updatedToDo){
-      res.status(200).json(updatedToDo);
-      } else {
-        res.status(404).json({ message: 'To Do not found' });
-      }
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return;
   }
-  }catch(error){
-    res.status(500).json({ message: 'Error updating todo', error });
-  }
-  return res;
-}
 
-//Method to delete toDo
-export const deleteToDo = async (req: Request, res: Response): Promise<Response<any, Record<string, any>>> =>{
-  try{
+  const updatedFields: Partial<IToDo> = {
+    title: title !== undefined ? title : undefined,
+    userId: userId !== undefined ? userId : undefined,
+    updatedDate: new Date(),
+  };
+
+  const updatedToDo = await ToDo.findByIdAndUpdate(
+    id,
+    updatedFields,
+    { new: true, runValidators: true }
+  );
+
+  if (updatedToDo) {
+    res.status(200).json(updatedToDo);
+  } else {
+    res.status(404).json({ message: 'To Do not found' });
+  }
+};
+
+// Method to delete toDo
+export const deleteToDo = async (req: Request, res: Response): Promise<void> => {
   const id = req.params.id;
-  const deletedToDo:IToDo | null = await ToDo.findByIdAndDelete(id);
+  const deletedToDo: IToDo | null = await ToDo.findByIdAndDelete(id);
+
   if (deletedToDo) {
-    // Send response back to client
-    return res.status(200).json({
+    res.status(200).json({
       message: 'To-Do deleted successfully',
       toDo: deletedToDo,
     });
   } else {
-    return res.status(404).json({ message: 'To-Do not found' });
+    res.status(404).json({ message: 'To-Do not found' });
   }
-}catch(error){
-  return res.status(500).json({ message: 'Error deleting todo', error });
-}
-}
-
-
+};

@@ -1,8 +1,7 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model, Types } from 'mongoose';
 import shortid from 'shortid';
 
 interface IUser {
-  id: string;
   name: string;
   email: string;
   password: string;
@@ -12,7 +11,6 @@ interface IUser {
 }
 
 const userSchema = new Schema<IUser>({
-  id: { type: String, default: shortid.generate, unique: true },
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
