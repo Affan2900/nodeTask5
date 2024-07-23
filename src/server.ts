@@ -3,7 +3,7 @@ import bodyParser from 'body-parser';
 import userRoutes from './routes/userRoutes';
 import toDoRoutes from './routes/toDoRoutes';
 import connectToDb from './config/connectToDb';
-
+import { errorHandler } from './middleware';
 
 // Create an express app
 const app = express();
@@ -13,6 +13,9 @@ connectToDb();
 
 //Middleware
 app.use(bodyParser.json());
+
+// Use the error handling middleware
+app.use(errorHandler);
 
 //Routes
 app.use('/api',userRoutes);
