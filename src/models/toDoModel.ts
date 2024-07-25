@@ -1,9 +1,8 @@
-import { Schema, model } from 'mongoose';
-import shortid from 'shortid';
+import { Schema, model, Types } from 'mongoose';
 
 interface IToDo { 
   title: string;
-  userId: string;
+  userId: Types.ObjectId;
   isCompleted: boolean;
   createdDate: Date;
   updatedDate: Date;
@@ -11,7 +10,7 @@ interface IToDo {
 
 const toDoSchema = new Schema<IToDo>({
   title: { type: String, required: true },
-  userId: { type: String, required: true },
+  userId: { type: Schema.Types.ObjectId, required: true },
   isCompleted: { type: Boolean, default: false },
   createdDate: { type: Date, default: Date.now },
   updatedDate: { type: Date, default: Date.now }

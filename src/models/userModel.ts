@@ -1,5 +1,5 @@
-import { Schema, model, Types } from 'mongoose';
-import shortid from 'shortid';
+import { Schema, model } from 'mongoose';
+
 
 interface IUser {
   name: string;

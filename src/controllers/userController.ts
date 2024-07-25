@@ -64,8 +64,11 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
   const deletedUser: IUser | null = await User.findByIdAndDelete(id);
 
   if (deletedUser) {
+    // Delete all todos associated with the deleted user
+    await ToDo.deleteMany({ userId: id });
+
     res.status(200).json({
-      message: 'User deleted successfully',
+      message: 'User and associated todos deleted successfully',
       user: deletedUser,
     });
   } else {
