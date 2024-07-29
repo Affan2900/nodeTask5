@@ -1,9 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
 import { body,param, validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
+import { Types } from 'mongoose';
+
+interface User {
+  _id: Types.ObjectId;
+  name: string;
+  email: string;
+  password: string;
+  isDisabled: boolean;
+  createdDate: Date;
+  updatedDate: Date;
+}
 
 interface RequestWithUser extends Request {
-  user?: any; // Adjust the type based on your user object structure
+  user?: User;
 }
 
 export const authenticateToken = (req: RequestWithUser, res: Response, next: NextFunction) => {
