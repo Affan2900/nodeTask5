@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { User, IUser } from '../models/userModel';
 import { ToDo, IToDo } from '../models/toDoModel';
+import { register } from '../services/authService';
 
 // Method to get all users
 export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
@@ -19,20 +20,16 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 };
 
 // Method to add user
-export const addUser = async (req: Request, res: Response): Promise<void> => {
+export const registerUser = async (req: Request, res: Response): Promise<void> => {
   const { name, email, password } = req.body;
+  const result = await register(name, email, password);
+  if (result.success) {
+    res.status(201).json({ message: result.message, data: result.data });
+  } else {
+    res.status(400).json({ message: result.message });
+  }
+}
 
-  const newUser = new User({
-    name,
-    email,
-    password,
-    createdDate: new Date(),
-    updatedDate: new Date(),
-  });
-
-  const savedUser: IUser = await newUser.save();
-  res.status(201).json(savedUser);
-};
 
 // Method to update user
 export const updateUser = async (req: Request, res: Response): Promise<void> => {

@@ -1,5 +1,33 @@
 import { Request, Response, NextFunction } from 'express';
 import { body,param, validationResult } from 'express-validator';
+import jwt from 'jsonwebtoken';
+import { Types } from 'mongoose';
+
+interface User {
+  _id: Types.ObjectId;
+  name: string;
+  email: string;
+  password: string;
+  isDisabled: boolean;
+  createdDate: Date;
+  updatedDate: Date;
+}
+
+interface RequestWithUser extends Request {
+  user?: User;
+}
+
+export const authenticateToken = (req: RequestWithUser, res: Response, next: NextFunction) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (token == null) return res.status(401).json({ message: 'Unauthorized' });
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string, (err: any, user: any) => {
+    if (err) return res.status(403).json({ message: 'Forbidden' });
+    req.user = user;
+    next();
+  });
+}
 
 //global error handler
 export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
