@@ -10,7 +10,7 @@ const router = express.Router();
 router.get('/users/login',authService.loginUser)
 router.get('/users',userController.getAllUsers);
 router.get('/users/:id',authenticateToken,validateUserId, userController.getUserById);
-router.post('/users', validateUserCreate, authService.registerUser);
+router.post('/users', validateUserCreate, userController.registerUser);
 router.put('/users/:id',authenticateToken,validateUserUpdate, userController.updateUser);
 router.patch('/users/:id',authenticateToken,validateUserUpdate, userController.updateUser);
 router.delete('/users/:id',authenticateToken, validateUserId, userController.deleteUser);

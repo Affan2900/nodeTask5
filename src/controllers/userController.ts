@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { User, IUser } from '../models/userModel';
 import { ToDo, IToDo } from '../models/toDoModel';
+import { register } from '../services/authService';
 
 // Method to get all users
 export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
@@ -17,6 +18,17 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
     res.status(404).json({ message: 'User not found' });
   }
 };
+
+// Method to add user
+export const registerUser = async (req: Request, res: Response): Promise<void> => {
+  const { name, email, password } = req.body;
+  const result = await register(name, email, password);
+  if (result.success) {
+    res.status(201).json({ message: result.message, data: result.data });
+  } else {
+    res.status(400).json({ message: result.message });
+  }
+}
 
 
 // Method to update user
