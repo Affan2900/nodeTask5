@@ -1,4 +1,8 @@
 import nodemailer from 'nodemailer';
+import { IToDo } from '../models/toDoModel';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 interface EmailOptions {
   to: string;
@@ -7,21 +11,19 @@ interface EmailOptions {
 }
 
 export default async function sendEmail(
-  userEmail: string,
-  userPassword: string,
   to: string,
   subject: string,
-  getEmailBody: () => Promise<string>
+  tasks: IToDo[]
 ): Promise<void> {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: userEmail,
-      pass: userPassword
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
     }
   });
 
-  const emailBody = await getEmailBody();
+  const emailBody = generateEmailBody(tasks);
 
   const mailOptions: EmailOptions = {
     to,
@@ -37,14 +39,9 @@ export default async function sendEmail(
   }
 }
 
-interface Task {
-  title: string;
-  description: string;
-  dueDate: Date;
-  status: 'completed' | 'pending';
-}
 
-function generateEmailBody(tasks: Task[]): string {
+
+function generateEmailBody(tasks: IToDo[]): string {
   // Start the HTML email body
   let emailBody = `
     <html>
@@ -63,9 +60,7 @@ function generateEmailBody(tasks: Task[]): string {
       emailBody += `
         <li>
           <strong>${task.title}</strong><br />
-          <em>Due: ${task.dueDate.toLocaleDateString()}</em><br />
-          <p>${task.description}</p>
-          <p>Status: ${task.status}</p>
+          <em>Due: ${task.createdDate.toLocaleDateString()}</em><br />
         </li>
       `;
     });
