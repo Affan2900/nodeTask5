@@ -9,6 +9,7 @@ interface IUser {
   isDisabled: boolean;
   createdDate: Date;
   updatedDate: Date;
+  profilePictureUrl?: string;
 }
 
 const userSchema = new Schema<IUser>({
@@ -17,7 +18,8 @@ const userSchema = new Schema<IUser>({
   password: { type: String, required: true },
   isDisabled: { type: Boolean, default: false },
   createdDate: { type: Date, default: Date.now },
-  updatedDate: { type: Date, default: Date.now }
+  updatedDate: { type: Date, default: Date.now },
+  profilePictureUrl: { type: String, default: '../imgs/defaultPfp.jpg' },
 });
 
 const User = model<IUser>('User', userSchema);

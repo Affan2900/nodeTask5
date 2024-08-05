@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { User, IUser } from '../models/userModel';
 import { ToDo, IToDo } from '../models/toDoModel';
+import { uploadToS3 } from '../services/s3Service';
 
 // Method to get all users
 export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
@@ -22,11 +23,17 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 // Method to update user
 export const updateUser = async (req: Request, res: Response): Promise<void> => {
   const id = req.params.id;
-  const { name, email } = req.body;
+  const { name, email, profilePictureUrl } = req.body;
+  let s3ProfilePictureUrl;
+
+  if (profilePictureUrl) {
+    s3ProfilePictureUrl = await uploadToS3(profilePictureUrl);
+  }
 
   const updatedFields: Partial<IUser> = {
     name: name !== undefined ? name : undefined,
     email: email !== undefined ? email : undefined,
+    profilePictureUrl: s3ProfilePictureUrl !== undefined ? s3ProfilePictureUrl : undefined,
     updatedDate: new Date(),
   };
 
@@ -38,6 +45,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
 
   if (updatedUser) {
     res.status(200).json(updatedUser);
+    console.log("User updated successfully");
   } else {
     res.status(404).json({ message: 'User not found' });
   }
