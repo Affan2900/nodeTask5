@@ -3,6 +3,10 @@ import { User, IUser } from '../models/userModel';
 import { ToDo, IToDo } from '../models/toDoModel';
 import { uploadToS3 } from '../services/s3Service';
 
+interface MulterRequest extends Request {
+  file?: Express.Multer.File;
+}
+
 // Method to get all users
 export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
   const users: IUser[] = await User.find({});
@@ -21,13 +25,13 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 
 
 // Method to update user
-export const updateUser = async (req: Request, res: Response): Promise<void> => {
+export const updateUser = async (req: MulterRequest, res: Response): Promise<void> => {
   const id = req.params.id;
-  const { name, email, profilePictureUrl } = req.body;
+  const { name, email } = req.body;
   let s3ProfilePictureUrl;
 
-  if (profilePictureUrl) {
-    s3ProfilePictureUrl = await uploadToS3(profilePictureUrl);
+  if (req.file) {
+    s3ProfilePictureUrl = await uploadToS3(req.file);
   }
 
   const updatedFields: Partial<IUser> = {

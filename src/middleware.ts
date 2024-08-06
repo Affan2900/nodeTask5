@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { body,param, validationResult } from 'express-validator';
+import axios from 'axios';
+import multer, { Multer } from 'multer';
+import path from 'path';
 import jwt from 'jsonwebtoken';
+import fs from 'fs';
 import { Types } from 'mongoose';
 
 interface User {
@@ -87,6 +91,68 @@ export const validateTodoUpdate = [
   body('isCompleted').optional().isBoolean().withMessage('isCompleted must be a boolean'),
   handleValidationErrors
 ];
+
+const storage: multer.StorageEngine = multer.memoryStorage();
+
+const handleProfilePictureUrl = async (req: Request, res: Response, next: NextFunction) => {
+  // Check if profilePictureUrl is present
+  if (!req.body.profilePictureUrl) {
+    return next(); // If not present, pass control to the next middleware
+  }
+
+  console.log('Fetching image from URL:', req.body.profilePictureUrl); // Log the URL
+
+  try {
+    // Ensure the uploads directory exists
+    const destination = 'uploads/';
+    if (!fs.existsSync(destination)) {
+      fs.mkdirSync(destination, { recursive: true });
+    }
+
+    // Proceed to download and save the image if the URL is present
+    const response = await axios.get(req.body.profilePictureUrl, { responseType: 'arraybuffer' });
+    
+    // Log the response status and headers
+    console.log('Response Status:', response.status);
+    console.log('Response Headers:', response.headers);
+
+    // Check if the response is an image
+    if (!response.headers['content-type'].startsWith('image/')) {
+      console.error('The fetched URL does not point to an image.');
+      return res.status(400).json({ error: 'The provided URL does not point to an image.' });
+    }
+
+    const buffer = Buffer.from(response.data, 'binary');
+    const filename = `${Date.now()}${path.extname(req.body.profilePictureUrl)}`;
+    
+    // Write the file to the uploads directory
+    const filePath = path.join(destination, filename);
+    fs.writeFileSync(filePath, buffer);
+    console.log('Image saved to:', filePath); // Log the saved file path
+
+    req.file = {
+      fieldname: 'profilePictureUrl',
+      originalname: filename,
+      encoding: '7bit',
+      mimetype: response.headers['content-type'] as string,
+      buffer,
+      size: buffer.length,
+      destination,
+      filename,
+      path: filePath,
+      stream: fs.createReadStream(filePath), // Include the stream property
+    };
+    console.log(typeof req.file.path);
+
+    next(); // Proceed to the next middleware
+  } catch (error) {
+    console.error('Error fetching or saving the image:', error);
+    next(error); // Handle any errors that occur during the process
+  }
+};
+
+const upload: Multer = multer({ storage });
+export { upload, handleProfilePictureUrl };
 
 // Middleware to handle validation errors produced by express-validator
 function handleValidationErrors(req: Request, res: Response, next: NextFunction) {

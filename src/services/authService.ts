@@ -1,30 +1,53 @@
-import { Request, Response } from 'express';
-import { User, IUser } from '../models/userModel';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import { Request, Response } from "express";
+import { User, IUser } from "../models/userModel";
+import { uploadToS3 } from "../services/s3Service";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+
+interface MulterRequest extends Request {
+  file?: Express.Multer.File;
+}
 
 //Finds user and validates credentials, then sends a JWT token based on the user's ID
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
   const user: IUser | null = await User.findOne({ email });
 
-  if (user && await bcrypt.compare(password, user.password)) {
-    const accessToken = jwt.sign({ userId: user._id.toString() }, process.env.ACCESS_TOKEN_SECRET as string, { expiresIn: '1h' });
+  if (user && (await bcrypt.compare(password, user.password))) {
+    const accessToken = jwt.sign(
+      { userId: user._id.toString() },
+      process.env.ACCESS_TOKEN_SECRET as string,
+      { expiresIn: "1h" }
+    );
     res.json({ accessToken });
   } else {
-    res.status(401).json({ message: 'Invalid credentials' });
+    res.status(401).json({ message: "Invalid credentials" });
   }
 };
 
 // Method to add user
-export const registerUser = async (req: Request, res: Response): Promise<void> => {
+export const registerUser = async (
+  req: MulterRequest,
+  res: Response
+): Promise<void> => {
   const { name, email, password } = req.body;
-  const hashedPassword = await bcrypt.hash(password,10); 
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  let profilePictureUrl = "../imgs/defaultPfp.jpg"; // Default profile picture
+
+  if (req.file) {
+    // Upload the file to S3 and get the URL
+    const s3ProfilePictureUrl = await uploadToS3(req.file);
+    if (s3ProfilePictureUrl) {
+      profilePictureUrl = s3ProfilePictureUrl;
+    }
+  }
 
   const newUser = new User({
     name,
     email,
     password: hashedPassword,
+    profilePictureUrl,
     createdDate: new Date(),
     updatedDate: new Date(),
   });

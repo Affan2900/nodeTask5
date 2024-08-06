@@ -19,7 +19,7 @@ const userSchema = new Schema<IUser>({
   isDisabled: { type: Boolean, default: false },
   createdDate: { type: Date, default: Date.now },
   updatedDate: { type: Date, default: Date.now },
-  profilePictureUrl: { type: String, default: '../imgs/defaultPfp.jpg' },
+  profilePictureUrl: { type: String },
 });
 
 const User = model<IUser>('User', userSchema);

@@ -1,7 +1,11 @@
 // s3Service.ts
 import AWS from 'aws-sdk';
+import { Request, Response } from 'express';
 import axios from 'axios';
 import path from 'path';
+import fs from 'fs';
+import { EventEmitter } from 'events';
+EventEmitter.defaultMaxListeners = 20;
 
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -9,26 +13,24 @@ const s3 = new AWS.S3({
   region: process.env.AWS_REGION,
 });
 
-export const uploadToS3 = async (imageUrl: string): Promise<string> => {
+export const uploadToS3 = async (file: Express.Multer.File): Promise<string | undefined> => {
   try {
-    // Download the image from the URL
-    const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-    const buffer = Buffer.from(response.data, 'binary');
+    const fileContent = fs.readFileSync(file.path);
 
     // Generate a unique filename
-    const filename = `${Date.now()}${path.extname(imageUrl)}`;
+    // Generate a unique filename
+    const filename = path.basename(file.path);
 
     const params = {
       Bucket: 'node-task',
       Key: `profile-pictures/${filename}`,
-      Body: buffer,
-      ContentType: response.headers['content-type'],
+      Body: fileContent,
+      ContentType: file.mimetype,
     };
 
     const data = await s3.upload(params).promise();
     return data.Location;
   } catch (error) {
     console.error('Error uploading to S3:', error);
-    throw error;
   }
 };
