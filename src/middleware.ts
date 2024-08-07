@@ -21,6 +21,18 @@ interface RequestWithUser extends Request {
   user?: User;
 }
 
+// Configure Multer for temporary storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // Temporary storage directory
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  },
+});
+
+export const upload = multer({ storage });
+
 export const authenticateToken = (req: RequestWithUser, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -32,6 +44,8 @@ export const authenticateToken = (req: RequestWithUser, res: Response, next: Nex
     next();
   });
 }
+
+
 
 //global error handler
 export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
@@ -51,6 +65,7 @@ export const validateUserId = [
 
 // Middleware to validate user creation
 export const validateUserCreate = [
+  upload.single('profilePicture'),
   body('name').isString().notEmpty().withMessage('Name is required and must be a string'),
   body('email').isEmail().withMessage('Valid email is required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
@@ -59,6 +74,7 @@ export const validateUserCreate = [
 
 // Middleware to validate user update
 export const validateUserUpdate = [
+  upload.single('profilePicture'),
   body('name').optional().isString().notEmpty().withMessage('Name must be a non-empty string'),
   body('email').optional().isEmail().withMessage('Valid email format required'),
   body('password').optional().isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
@@ -92,67 +108,6 @@ export const validateTodoUpdate = [
   handleValidationErrors
 ];
 
-const storage: multer.StorageEngine = multer.memoryStorage();
-
-const handleProfilePictureUrl = async (req: Request, res: Response, next: NextFunction) => {
-  // Check if profilePictureUrl is present
-  if (!req.body.profilePictureUrl) {
-    return next(); // If not present, pass control to the next middleware
-  }
-
-  console.log('Fetching image from URL:', req.body.profilePictureUrl); // Log the URL
-
-  try {
-    // Ensure the uploads directory exists
-    const destination = 'uploads/';
-    if (!fs.existsSync(destination)) {
-      fs.mkdirSync(destination, { recursive: true });
-    }
-
-    // Proceed to download and save the image if the URL is present
-    const response = await axios.get(req.body.profilePictureUrl, { responseType: 'arraybuffer' });
-    
-    // Log the response status and headers
-    console.log('Response Status:', response.status);
-    console.log('Response Headers:', response.headers);
-
-    // Check if the response is an image
-    if (!response.headers['content-type'].startsWith('image/')) {
-      console.error('The fetched URL does not point to an image.');
-      return res.status(400).json({ error: 'The provided URL does not point to an image.' });
-    }
-
-    const buffer = Buffer.from(response.data, 'binary');
-    const filename = `${Date.now()}${path.extname(req.body.profilePictureUrl)}`;
-    
-    // Write the file to the uploads directory
-    const filePath = path.join(destination, filename);
-    fs.writeFileSync(filePath, buffer);
-    console.log('Image saved to:', filePath); // Log the saved file path
-
-    req.file = {
-      fieldname: 'profilePictureUrl',
-      originalname: filename,
-      encoding: '7bit',
-      mimetype: response.headers['content-type'] as string,
-      buffer,
-      size: buffer.length,
-      destination,
-      filename,
-      path: filePath,
-      stream: fs.createReadStream(filePath), // Include the stream property
-    };
-    console.log(typeof req.file.path);
-
-    next(); // Proceed to the next middleware
-  } catch (error) {
-    console.error('Error fetching or saving the image:', error);
-    next(error); // Handle any errors that occur during the process
-  }
-};
-
-const upload: Multer = multer({ storage });
-export { upload, handleProfilePictureUrl };
 
 // Middleware to handle validation errors produced by express-validator
 function handleValidationErrors(req: Request, res: Response, next: NextFunction) {

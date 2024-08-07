@@ -9,7 +9,7 @@ interface IUser {
   isDisabled: boolean;
   createdDate: Date;
   updatedDate: Date;
-  profilePictureUrl?: string;
+  profilePictureUrl: string;
 }
 
 const userSchema = new Schema<IUser>({

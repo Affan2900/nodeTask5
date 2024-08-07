@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { User, IUser } from "../models/userModel";
 import { uploadToS3 } from "../services/s3Service";
+
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 

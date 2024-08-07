@@ -1,7 +1,5 @@
 // s3Service.ts
 import AWS from 'aws-sdk';
-import { Request, Response } from 'express';
-import axios from 'axios';
 import path from 'path';
 import fs from 'fs';
 import { EventEmitter } from 'events';
@@ -14,12 +12,13 @@ const s3 = new AWS.S3({
 });
 
 export const uploadToS3 = async (file: Express.Multer.File): Promise<string | undefined> => {
+  const filePath = file.path;
   try {
-    const fileContent = fs.readFileSync(file.path);
+    const fileContent = fs.readFileSync(filePath);
 
     // Generate a unique filename
     // Generate a unique filename
-    const filename = path.basename(file.path);
+    const filename = path.basename(filePath);
 
     const params = {
       Bucket: 'node-task',
@@ -32,5 +31,8 @@ export const uploadToS3 = async (file: Express.Multer.File): Promise<string | un
     return data.Location;
   } catch (error) {
     console.error('Error uploading to S3:', error);
+    return undefined;
+  } finally{
+    fs.unlinkSync(filePath);
   }
 };
