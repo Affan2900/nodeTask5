@@ -37,7 +37,7 @@ export const updateUser = async (req: MulterRequest, res: Response): Promise<voi
   const updatedFields: Partial<IUser> = {
     name: name !== undefined ? name : undefined,
     email: email !== undefined ? email : undefined,
-    profilePictureUrl: s3ProfilePictureUrl !== undefined ? s3ProfilePictureUrl : undefined,
+    profilePictureUrl: s3ProfilePictureUrl ?? "../imgs/defaultPfp.jpg",
     updatedDate: new Date(),
   };
 

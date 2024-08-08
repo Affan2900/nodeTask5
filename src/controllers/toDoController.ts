@@ -3,7 +3,7 @@
 import { Request, Response } from 'express';
 import { ToDo, IToDo } from '../models/toDoModel';
 import { User, IUser } from '../models/userModel';
-import shortid from 'shortid';
+
 
 // Method to get all toDos
 export const getAllToDos = async (req: Request, res: Response): Promise<void> => {
@@ -32,7 +32,6 @@ export const addToDo = async (req: Request, res: Response): Promise<void> => {
   }
 
   const newToDo = new ToDo({
-    id: shortid.generate(),
     title,
     userId,
     isCompleted: false,

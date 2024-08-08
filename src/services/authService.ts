@@ -34,21 +34,18 @@ export const registerUser = async (
   const { name, email, password } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  let profilePictureUrl = "../imgs/defaultPfp.jpg"; // Default profile picture
+  let s3ProfilePictureUrl;
 
   if (req.file) {
     // Upload the file to S3 and get the URL
-    const s3ProfilePictureUrl = await uploadToS3(req.file);
-    if (s3ProfilePictureUrl) {
-      profilePictureUrl = s3ProfilePictureUrl;
-    }
+    s3ProfilePictureUrl = await uploadToS3(req.file);
   }
 
   const newUser = new User({
     name,
     email,
     password: hashedPassword,
-    profilePictureUrl,
+    profilePictureUrl: s3ProfilePictureUrl ?? "../imgs/defaultPfp.jpg",
     createdDate: new Date(),
     updatedDate: new Date(),
   });
